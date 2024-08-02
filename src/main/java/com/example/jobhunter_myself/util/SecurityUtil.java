@@ -17,6 +17,8 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
+import com.example.jobhunter_myself.domain.response.ResLoginDTO;
+
 @Service
 public class SecurityUtil {
 
@@ -36,7 +38,11 @@ public class SecurityUtil {
     @Value("${nqoctai.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-    public String createAccessToken(Authentication authentication) {
+    public String createAccessToken(String email, ResLoginDTO dto) {
+        ResLoginDTO.UserInsideToken userToken = new ResLoginDTO.UserInsideToken();
+        userToken.setId(dto.getUser().getId());
+        userToken.setEmail(dto.getUser().getEmail());
+        userToken.setName(dto.getUser().getName());
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
@@ -44,8 +50,8 @@ public class SecurityUtil {
     JwtClaimsSet claims = JwtClaimsSet.builder()
     .issuedAt(now)
     .expiresAt(validity)
-    .subject(authentication.getName())
-    .claim("user", authentication)
+    .subject(email)
+    .claim("user", userToken)
     .build();
 
     JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

@@ -26,6 +26,12 @@ import com.nimbusds.jose.util.Base64;
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguaration {
 
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    public SecurityConfiguaration(CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+    }
+
     @Value("${nqoctai.jwt.base64-secret}")
     private String jwtKey;
 
@@ -56,7 +62,8 @@ public class SecurityConfiguaration {
                                 .requestMatchers(whiteList).permitAll()
                                 .anyRequest().authenticated())
                 .formLogin(f -> f.disable())
-                .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults())
+                        .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
