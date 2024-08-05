@@ -42,6 +42,10 @@ public class CompanyService {
         return null;
     }
 
+    public Optional<Company> findById(long id) {
+        return companyRepository.findById(id);
+    }
+
     public Company updateCompany(Company rqCompany) {
         Company companyDB = this.fetchCompanyById(rqCompany.getId());
         if (companyDB != null) {
