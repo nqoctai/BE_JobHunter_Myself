@@ -57,6 +57,7 @@ public class SkillService {
         Optional<Skill> skillOP = skillRepository.findById(id);
         Skill currentSkill = skillOP.get();
         currentSkill.getJobs().forEach(job -> job.getSkills().remove(currentSkill));
+        currentSkill.getSubscribers().forEach(subscriber -> subscriber.getSkills().remove(currentSkill));
         skillRepository.delete(currentSkill);
     }
 }
