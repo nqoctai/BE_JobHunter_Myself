@@ -1,6 +1,8 @@
 package com.example.jobhunter_myself.controller;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,15 +17,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.jobhunter_myself.domain.Company;
+import com.example.jobhunter_myself.domain.Job;
 import com.example.jobhunter_myself.domain.Resume;
+import com.example.jobhunter_myself.domain.User;
 import com.example.jobhunter_myself.domain.response.ResultPaginationDTO;
 import com.example.jobhunter_myself.domain.response.resume.ResCreateResumeDTO;
 import com.example.jobhunter_myself.domain.response.resume.ResFetchResumeDTO;
 import com.example.jobhunter_myself.domain.response.resume.ResUpdateResumeDTO;
 import com.example.jobhunter_myself.service.ResumeService;
+import com.example.jobhunter_myself.service.UserService;
+import com.example.jobhunter_myself.util.SecurityUtil;
 import com.example.jobhunter_myself.util.annotation.ApiMessage;
 import com.example.jobhunter_myself.util.error.IdInvalidException;
 import com.turkraft.springfilter.boot.Filter;
+import com.turkraft.springfilter.builder.FilterBuilder;
+import com.turkraft.springfilter.converter.FilterSpecificationConverter;
 
 import jakarta.validation.Valid;
 
@@ -31,9 +40,16 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1")
 public class ResumeController {
     private final ResumeService resumeService;
+    private final UserService userService;
+    private final FilterBuilder filterBuilder;
+    private final FilterSpecificationConverter filterSpecificationConverter;
 
-    public ResumeController(ResumeService resumeService) {
+    public ResumeController(ResumeService resumeService, UserService userService, FilterBuilder filterBuilder,
+            FilterSpecificationConverter filterSpecificationConverter) {
         this.resumeService = resumeService;
+        this.userService = userService;
+        this.filterBuilder = filterBuilder;
+        this.filterSpecificationConverter = filterSpecificationConverter;
     }
 
     @PostMapping("/resumes")
@@ -83,8 +99,39 @@ public class ResumeController {
     }
 
     @GetMapping("/resumes")
-    @ApiMessage("Get All Resume")
-    public ResponseEntity<ResultPaginationDTO> getAllResume(@Filter Specification<Resume> spec, Pageable pageable) {
-        return ResponseEntity.ok().body(resumeService.getAllResume(spec, pageable));
+    @ApiMessage("Fetch all resume with paginate")
+    public ResponseEntity<ResultPaginationDTO> fetchAll(
+            @Filter Specification<Resume> spec,
+            Pageable pageable) {
+
+        List<Long> arrJobIds = null;
+        String email = SecurityUtil.getCurrentUserLogin().isPresent() == true
+                ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
+        User currentUser = this.userService.getUserByEmail(email);
+        if (currentUser != null) {
+            Company userCompany = currentUser.getCompany();
+            if (userCompany != null) {
+                List<Job> companyJobs = userCompany.getJobs();
+                if (companyJobs != null && companyJobs.size() > 0) {
+                    arrJobIds = companyJobs.stream().map(x -> x.getId())
+                            .collect(Collectors.toList());
+                }
+            }
+        }
+
+        Specification<Resume> jobInSpec = filterSpecificationConverter.convert(filterBuilder.field("job")
+                .in(filterBuilder.input(arrJobIds)).get());
+
+        Specification<Resume> finalSpec = jobInSpec.and(spec);
+
+        return ResponseEntity.ok().body(this.resumeService.getAllResume(finalSpec, pageable));
+    }
+
+    @PostMapping("/resumes/by-user")
+    @ApiMessage("Get list resumes by user")
+    public ResponseEntity<ResultPaginationDTO> fetchResumeByUser(Pageable pageable) {
+
+        return ResponseEntity.ok().body(this.resumeService.fetchResumeByUser(pageable));
     }
 }

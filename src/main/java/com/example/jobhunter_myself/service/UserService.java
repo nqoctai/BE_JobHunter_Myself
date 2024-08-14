@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.example.jobhunter_myself.domain.Company;
+import com.example.jobhunter_myself.domain.Role;
 import com.example.jobhunter_myself.domain.User;
 import com.example.jobhunter_myself.domain.response.ResCreateUserDTO;
 import com.example.jobhunter_myself.domain.response.ResUpdateUserDTO;
@@ -22,10 +23,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final CompanyService companyService;
+    private final RoleService roleService;
 
-    public UserService(UserRepository userRepository, CompanyService companyService) {
+    public UserService(UserRepository userRepository, CompanyService companyService, RoleService roleService) {
         this.userRepository = userRepository;
         this.companyService = companyService;
+        this.roleService = roleService;
     }
 
     public User createUser(User user) {
@@ -33,6 +36,12 @@ public class UserService {
             Company company = this.companyService.fetchCompanyById(user.getCompany().getId());
             user.setCompany(company != null ? company : null);
 
+        }
+
+        // check role
+        if (user.getRole() != null) {
+            Role r = this.roleService.fetchById(user.getRole().getId());
+            user.setRole(r != null ? r : null);
         }
 
         return userRepository.save(user);
@@ -53,10 +62,10 @@ public class UserService {
             }
 
             // check role
-            // if (reqUser.getRole() != null) {
-            // Role r = this.roleService.fetchById(reqUser.getRole().getId());
-            // currentUser.setRole(r != null ? r : null);
-            // }
+            if (reqUser.getRole() != null) {
+                Role r = this.roleService.fetchById(reqUser.getRole().getId());
+                currentUser.setRole(r != null ? r : null);
+            }
 
             // update
             userRepository.save(currentUser);

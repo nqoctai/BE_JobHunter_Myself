@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileService {
-    @Value("${ngqoctai.upload-file.base-uri}")
+    @Value("${nqoctai.upload-file.base-uri}")
     private String baseURI;
 
     public void createUploadFolder(String folder) throws URISyntaxException {

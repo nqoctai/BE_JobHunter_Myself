@@ -1,5 +1,6 @@
 package com.example.jobhunter_myself.domain.response;
 
+import com.example.jobhunter_myself.domain.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
@@ -24,7 +25,7 @@ public class ResLoginDTO {
         private long id;
         private String email;
         private String name;
-        // private Role role;
+        private Role role;
     }
 
     @Getter

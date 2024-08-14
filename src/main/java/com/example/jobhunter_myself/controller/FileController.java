@@ -34,7 +34,7 @@ public class FileController {
         this.fileService = fileService;
     }
 
-    @Value("${ngqoctai.upload-file.base-uri}")
+    @Value("${nqoctai.upload-file.base-uri}")
     private String baseURI;
 
     @PostMapping("/files")
